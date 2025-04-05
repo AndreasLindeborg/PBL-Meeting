@@ -1,16 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { doc, onSnapshot, updateDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../firebase";
 import { User } from "firebase/auth";
 import ThemeToggle from "./ThemeToggle";
-
 import { toast } from "react-toastify";
-
 import "react-toastify/dist/ReactToastify.css";
 
-
-// Helper function to randomly pick two unique participants excluding the creator
 const pickRoles = (participants: any[], creatorUid: string) => {
   const eligible = participants.filter((p: any) => p.uid !== creatorUid);
   if (eligible.length < 2) return { chairman: null, secretary: null };
@@ -31,16 +28,33 @@ export default function Meeting({ user }: Props) {
   const [meeting, setMeeting] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [spinning, setSpinning] = useState(false);
-  const [selectedRoles, setSelectedRoles] = useState<{ chairman: string; secretary: string } | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [justStarted, setJustStarted] = useState(false);
+  const [showRoles, setShowRoles] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-
     const unsubscribe = onSnapshot(
       doc(db, "meetings", id),
       (docSnap) => {
         if (docSnap.exists()) {
-          setMeeting(docSnap.data());
+          const meetingData = docSnap.data();
+
+          // Detect transition to "started" state for all users
+          if (meeting?.status !== "started" && meetingData.status === "started") {
+            setSpinning(true);
+            setShowRoles(false);
+            setJustStarted(true);
+            setTimeout(() => {
+              setSpinning(false);
+              setShowRoles(true);
+              setTimeout(() => {
+                navigate(`/meeting/${id}/active`);
+              }, 4000); // 4 more seconds after roles show = total 7 seconds
+            }, 3000);
+          }
+
+          setMeeting(meetingData);
         } else {
           console.error("Meeting not found");
         }
@@ -51,49 +65,55 @@ export default function Meeting({ user }: Props) {
         setLoading(false);
       }
     );
-
     return () => unsubscribe();
-  }, [id]);
+  }, [id, navigate, meeting?.status]);
 
   const handleLeave = async () => {
     if (!id || !meeting) return;
-
     try {
       const updatedParticipants = meeting.participants.filter(
         (p: any) => p.uid !== user.uid
       );
-
       await updateDoc(doc(db, "meetings", id), {
         participants: updatedParticipants,
       });
-
       navigate("/lobby");
     } catch (err) {
       console.error("Error leaving meeting:", err);
     }
   };
 
+  const handleUpload = async () => {
+    if (!file || !id) {
+      toast.error("Please select a file first.");
+      return;
+    }
+    try {
+      const fileRef = ref(storage, `meetings/${id}/${file.name}`);
+      await uploadBytes(fileRef, file);
+      const fileUrl = await getDownloadURL(fileRef);
+      await updateDoc(doc(db, "meetings", id), { vinjettUrl: fileUrl });
+      toast.success("File uploaded successfully");
+    } catch (error) {
+      console.error("Upload failed:", error);
+      toast.error("Failed to upload file");
+    }
+  };
+
   const handleStartMeeting = async () => {
     if (!id || !meeting) return;
-
     const { chairman, secretary } = pickRoles(meeting.participants, meeting.createdBy);
-
-    setSpinning(true);
-    setTimeout(async () => {
-      setSpinning(false);
-      setSelectedRoles({ chairman, secretary });
-      try {
-        await updateDoc(doc(db, "meetings", id), {
-          status: "started",
-          chairman,
-          secretary,
-        });
-        toast.success("Meeting started! Roles assigned.");
-      } catch (err) {
-        console.error("Error starting meeting:", err);
-        toast.error("Failed to start meeting.");
-      }
-    }, 3000); // simulate spinner for 3 seconds
+    try {
+      await updateDoc(doc(db, "meetings", id), {
+        status: "started",
+        chairman,
+        secretary,
+      });
+      toast.success("Meeting started! Roles assigned.");
+    } catch (err) {
+      console.error("Error starting meeting:", err);
+      toast.error("Failed to start meeting.");
+    }
   };
 
   if (loading)
@@ -126,12 +146,29 @@ export default function Meeting({ user }: Props) {
       </div>
 
       {meeting?.status === "waiting" && user.uid === meeting.createdBy && (
-        <button
-          onClick={handleStartMeeting}
-          className="mt-6 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-        >
-          Start Meeting
-        </button>
+        <>
+          <div className="mt-6">
+            <input
+              type="file"
+              accept="application/pdf,image/*"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="mb-2"
+            />
+            <button
+              onClick={handleUpload}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Upload Vinjett
+            </button>
+          </div>
+
+          <button
+            onClick={handleStartMeeting}
+            className="mt-6 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            Start Meeting
+          </button>
+        </>
       )}
 
       {spinning && (
@@ -140,11 +177,9 @@ export default function Meeting({ user }: Props) {
         </div>
       )}
 
-      {meeting?.status === "started" && (
+      {showRoles && (
         <div className="mt-6 text-center">
-          <p className="font-semibold text-lg text-blue-500">
-            Meeting started!
-          </p>
+          <p className="font-semibold text-lg text-blue-500">Meeting started!</p>
           <p className="mt-2">Chairman: <strong>{meeting.chairman}</strong></p>
           <p>Secretary: <strong>{meeting.secretary}</strong></p>
         </div>

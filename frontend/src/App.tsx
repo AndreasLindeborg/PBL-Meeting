@@ -7,6 +7,9 @@ import Login from "./components/Login";
 import Lobby from "./components/Lobby";
 import Meeting from "./components/Meeting";
 
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,6 +41,7 @@ export default function App() {
           element={<Navigate to={user ? "/lobby" : "/login"} />}
         />
       </Routes>
+      <ToastContainer position="bottom-right" autoClose={3000} />
     </Router>
   );
 }
