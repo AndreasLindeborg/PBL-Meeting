@@ -44,6 +44,7 @@ export default function ActiveMeeting({ user }: Props) {
       if (data) {
         setMeeting(data);
         setNotes(data.notes || "");
+        setLoading(false);
       }
     });
 
