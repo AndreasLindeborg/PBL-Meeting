@@ -50,22 +50,22 @@ export default function GlobalChat({ user }: Props) {
   };
 
   return (
-      <div className="w-full h-full px-4 flex flex-col justify-between">
+    <div className="w-full h-full px-4 flex flex-col justify-between">
       <h2 className="text-xl font-semibold mb-2">Basgrupp 1 - Global Chat</h2>
-      <div className="border p-3 rounded flex-1 overflow-y-auto bg-white shadow-sm">
 
+      <div className="border p-3 rounded flex-1 overflow-y-auto bg-white shadow-sm dark:bg-darkCard dark:border-darkBorder">
         {messages.map((msg, index) => (
           <div
             key={index}
             className={`mb-2 p-2 rounded-md max-w-[80%] ${
               user?.displayName === msg.sender
-                ? "bg-blue-100 text-right ml-auto"
-                : "bg-gray-100 text-left"
+                ? "bg-blue-100 dark:bg-blue-900 text-right ml-auto"
+                : "bg-gray-100 dark:bg-gray-700 text-left"
             }`}
           >
             <div className="text-sm font-medium">{msg.sender}</div>
             <div>{msg.text}</div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-gray-500 dark:text-gray-300 mt-1">
               {msg.createdAt?.toDate
                 ? format(msg.createdAt.toDate(), "HH:mm dd/MM")
                 : ""}
@@ -74,7 +74,6 @@ export default function GlobalChat({ user }: Props) {
         ))}
       </div>
 
-      {/* Message input */}
       {user && (
         <div className="mt-4 flex">
           <input
@@ -82,7 +81,7 @@ export default function GlobalChat({ user }: Props) {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 px-3 py-2 border rounded-l"
+            className="flex-1 px-3 py-2 border rounded-l dark:bg-gray-800 dark:text-white dark:border-gray-600"
           />
           <button
             onClick={sendMessage}
