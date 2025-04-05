@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { doc, onSnapshot, updateDoc } from "firebase/firestore"; 
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { User } from "firebase/auth";
-
-
-
+import ThemeToggle from "./ThemeToggle"; 
 
 type Props = {
   user: User;
@@ -36,50 +34,55 @@ export default function Meeting({ user }: Props) {
       }
     );
 
-    return () => unsubscribe(); // 👈 clean up listener on unmount
+    return () => unsubscribe();
   }, [id]);
 
   const handleLeave = async () => {
     if (!id || !meeting) return;
-  
+
     try {
       const updatedParticipants = meeting.participants.filter(
         (p: any) => p.uid !== user.uid
       );
-  
+
       await updateDoc(doc(db, "meetings", id), {
         participants: updatedParticipants,
       });
-  
+
       navigate("/lobby");
     } catch (err) {
       console.error("Error leaving meeting:", err);
     }
   };
-  
-  
 
-  if (loading) return <p className="text-center mt-10">Loading meeting...</p>;
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-darkBg text-black dark:text-darkText">
+        <p>Loading meeting...</p>
+      </div>
+    );
 
   return (
-    <div className="text-center mt-10">
+    <div className="min-h-screen bg-white text-black dark:bg-darkBg dark:text-darkText relative flex flex-col items-center p-8">
       <h1 className="text-2xl font-bold">Meeting Room</h1>
-      <p className="mt-2 text-gray-600">Meeting ID: {id}</p>
-      <p className="mt-2 text-gray-600">Created by: {meeting?.createdBy}</p>
+      <p className="mt-2 text-gray-600 dark:text-gray-400">Meeting ID: {id}</p>
+      <p className="mt-2 text-gray-600 dark:text-gray-400">
+        Created by: {meeting?.createdBy}
+      </p>
       <p className="mt-4 font-medium">Welcome, {user.displayName}</p>
 
       <div className="mt-6">
         <h2 className="text-lg font-semibold">Participants:</h2>
         <ul className="mt-2">
           {meeting?.participants?.map((p: any, index: number) => (
-            <li key={index} className="text-gray-700">
+            <li key={index} className="text-gray-700 dark:text-gray-300">
               {p.displayName || p.name || p.uid}
             </li>
           ))}
         </ul>
       </div>
 
-      <div className="mt-6 text-sm text-gray-500 italic">
+      <div className="mt-6 text-sm text-gray-500 dark:text-gray-400 italic">
         (Here we’ll build the wheel spinner, PDF viewer, and live notes soon!)
       </div>
 
@@ -89,6 +92,11 @@ export default function Meeting({ user }: Props) {
       >
         Leave Meeting
       </button>
+
+      {/* Floating dark mode toggle in bottom right */}
+      <div className="absolute bottom-4 right-4">
+        <ThemeToggle />
+      </div>
     </div>
   );
 }
