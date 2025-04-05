@@ -1,12 +1,43 @@
-import Login from "./components/Login";
+import { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "./firebase";
 
-function App() {
+import Login from "./components/Login";
+import Lobby from "./components/Lobby";
+import Meeting from "./components/Meeting";
+
+export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) return <div className="text-center mt-10">Loading...</div>;
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="text-3xl font-bold">PBL Meeting</h1>
-      <Login />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/lobby"
+          element={user ? <Lobby user={user} /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/meeting/:id"
+          element={user ? <Meeting user={user} /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/"
+          element={<Navigate to={user ? "/lobby" : "/login"} />}
+        />
+      </Routes>
+    </Router>
   );
 }
-
-export default App;
