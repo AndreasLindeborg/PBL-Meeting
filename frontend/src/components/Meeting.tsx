@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 
 import "react-toastify/dist/ReactToastify.css";
 
+
 // Helper function to randomly pick two unique participants excluding the creator
 const pickRoles = (participants: any[], creatorUid: string) => {
   const eligible = participants.filter((p: any) => p.uid !== creatorUid);
@@ -29,6 +30,8 @@ export default function Meeting({ user }: Props) {
   const navigate = useNavigate();
   const [meeting, setMeeting] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [spinning, setSpinning] = useState(false);
+  const [selectedRoles, setSelectedRoles] = useState<{ chairman: string; secretary: string } | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -75,18 +78,22 @@ export default function Meeting({ user }: Props) {
 
     const { chairman, secretary } = pickRoles(meeting.participants, meeting.createdBy);
 
-    try {
-      await updateDoc(doc(db, "meetings", id), {
-        status: "started",
-        chairman,
-        secretary,
-      });
-
-      toast.success("Meeting started! Roles assigned.");
-    } catch (err) {
-      console.error("Error starting meeting:", err);
-      toast.error("Failed to start meeting.");
-    }
+    setSpinning(true);
+    setTimeout(async () => {
+      setSpinning(false);
+      setSelectedRoles({ chairman, secretary });
+      try {
+        await updateDoc(doc(db, "meetings", id), {
+          status: "started",
+          chairman,
+          secretary,
+        });
+        toast.success("Meeting started! Roles assigned.");
+      } catch (err) {
+        console.error("Error starting meeting:", err);
+        toast.error("Failed to start meeting.");
+      }
+    }, 3000); // simulate spinner for 3 seconds
   };
 
   if (loading)
@@ -125,6 +132,12 @@ export default function Meeting({ user }: Props) {
         >
           Start Meeting
         </button>
+      )}
+
+      {spinning && (
+        <div className="mt-6 text-blue-400 text-lg font-medium animate-pulse">
+          🎡 Spinning the wheel to assign roles...
+        </div>
       )}
 
       {meeting?.status === "started" && (
