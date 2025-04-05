@@ -1,7 +1,10 @@
+import Login from "./components/Login";
+
 function App() {
   return (
-    <div className="bg-blue-500 min-h-screen flex items-center justify-center">
-      <h1 className="text-white text-4xl font-bold">Tailwind is working! 🎉</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      <h1 className="text-3xl font-bold">PBL Meeting</h1>
+      <Login />
     </div>
   );
 }
