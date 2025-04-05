@@ -6,6 +6,7 @@ import { auth } from "./firebase";
 import Login from "./components/Login";
 import Lobby from "./components/Lobby";
 import Meeting from "./components/Meeting";
+import ActiveMeeting from "./components/ActiveMeeting"; // ✅ NEW
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -35,6 +36,10 @@ export default function App() {
         <Route
           path="/meeting/:id"
           element={user ? <Meeting user={user} /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/meeting/:id/active" // ✅ NEW
+          element={user ? <ActiveMeeting user={user} /> : <Navigate to="/login" />}
         />
         <Route
           path="/"
