@@ -10,9 +10,11 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 
-const pickRoles = (participants: any[]) => {
-  if (participants.length < 2) return { chairman: null, secretary: null };
-  const shuffled = [...participants].sort(() => 0.5 - Math.random());
+// Helper function to randomly pick two unique participants excluding the creator
+const pickRoles = (participants: any[], creatorUid: string) => {
+  const eligible = participants.filter((p: any) => p.uid !== creatorUid);
+  if (eligible.length < 2) return { chairman: null, secretary: null };
+  const shuffled = [...eligible].sort(() => 0.5 - Math.random());
   return {
     chairman: shuffled[0].displayName,
     secretary: shuffled[1].displayName,
@@ -72,7 +74,7 @@ export default function Meeting({ user }: Props) {
   const handleStartMeeting = async () => {
     if (!id || !meeting) return;
 
-    const { chairman, secretary } = pickRoles(meeting.participants);
+    const { chairman, secretary } = pickRoles(meeting.participants, meeting.createdBy);
 
     try {
       await updateDoc(doc(db, "meetings", id), {
@@ -110,12 +112,13 @@ export default function Meeting({ user }: Props) {
           {meeting?.participants?.map((p: any, index: number) => (
             <li key={index} className="text-gray-700 dark:text-gray-300">
               {p.displayName || p.name || p.uid}
+              {p.uid === meeting.createdBy && " (supervisor)"}
             </li>
           ))}
         </ul>
       </div>
 
-      {meeting?.status === "waiting" && (
+      {meeting?.status === "waiting" && user.uid === meeting.createdBy && (
         <button
           onClick={handleStartMeeting}
           className="mt-6 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
