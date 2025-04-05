@@ -13,7 +13,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import GlobalChat from "./GlobalChat";
-import ThemeToggle from "./ThemeToggle";
+import ThemeToggle from "./ThemeToggle"; 
 
 
 type Props = {
@@ -34,6 +34,9 @@ export default function Lobby({ user }: Props) {
         createdBy: user.uid,
         createdAt: Timestamp.now(),
         participants: [{ uid: user.uid, displayName: user.displayName }],
+        status: "waiting", 
+        chairman: null,
+        secretary: null,
       });
       navigate(`/meeting/${docRef.id}`);
     } catch (error) {

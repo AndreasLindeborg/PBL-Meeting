@@ -3,7 +3,21 @@ import { useNavigate, useParams } from "react-router-dom";
 import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { User } from "firebase/auth";
-import ThemeToggle from "./ThemeToggle"; 
+import ThemeToggle from "./ThemeToggle";
+
+import { toast } from "react-toastify";
+
+import "react-toastify/dist/ReactToastify.css";
+
+
+const pickRoles = (participants: any[]) => {
+  if (participants.length < 2) return { chairman: null, secretary: null };
+  const shuffled = [...participants].sort(() => 0.5 - Math.random());
+  return {
+    chairman: shuffled[0].displayName,
+    secretary: shuffled[1].displayName,
+  };
+};
 
 type Props = {
   user: User;
@@ -55,6 +69,25 @@ export default function Meeting({ user }: Props) {
     }
   };
 
+  const handleStartMeeting = async () => {
+    if (!id || !meeting) return;
+
+    const { chairman, secretary } = pickRoles(meeting.participants);
+
+    try {
+      await updateDoc(doc(db, "meetings", id), {
+        status: "started",
+        chairman,
+        secretary,
+      });
+
+      toast.success("Meeting started! Roles assigned.");
+    } catch (err) {
+      console.error("Error starting meeting:", err);
+      toast.error("Failed to start meeting.");
+    }
+  };
+
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-darkBg text-black dark:text-darkText">
@@ -82,9 +115,24 @@ export default function Meeting({ user }: Props) {
         </ul>
       </div>
 
-      <div className="mt-6 text-sm text-gray-500 dark:text-gray-400 italic">
-        (Here we’ll build the wheel spinner, PDF viewer, and live notes soon!)
-      </div>
+      {meeting?.status === "waiting" && (
+        <button
+          onClick={handleStartMeeting}
+          className="mt-6 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          Start Meeting
+        </button>
+      )}
+
+      {meeting?.status === "started" && (
+        <div className="mt-6 text-center">
+          <p className="font-semibold text-lg text-blue-500">
+            Meeting started!
+          </p>
+          <p className="mt-2">Chairman: <strong>{meeting.chairman}</strong></p>
+          <p>Secretary: <strong>{meeting.secretary}</strong></p>
+        </div>
+      )}
 
       <button
         onClick={handleLeave}
@@ -93,7 +141,6 @@ export default function Meeting({ user }: Props) {
         Leave Meeting
       </button>
 
-      {/* Floating dark mode toggle in bottom right */}
       <div className="absolute bottom-4 right-4">
         <ThemeToggle />
       </div>
