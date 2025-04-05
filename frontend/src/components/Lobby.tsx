@@ -62,39 +62,45 @@ export default function Lobby({ user }: Props) {
   };
 
   return (
-    <div className="text-center mt-10">
-      <h1 className="text-2xl font-bold">Welcome, {user.displayName}</h1>
-      <p className="text-gray-600 mb-4">What would you like to do?</p>
+    <div className="flex min-h-screen">
+      {/* Left side: Chat */}
+      <div className="w-2/3 p-6 border-r">
+        <GlobalChat user={user} />
+      </div>
   
-      <div className="space-x-2">
-        <input
-          type="text"
-          placeholder="Enter meeting ID"
-          value={meetingId}
-          onChange={(e) => setMeetingId(e.target.value)}
-          className="border px-2 py-1 rounded"
-        />
-        <button
-          onClick={joinMeeting}
-          className="bg-green-500 text-white px-4 py-2 rounded"
-        >
-          Join Meeting
-        </button>
-        <button
-          onClick={createMeeting}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Create New Meeting
-        </button>
+      {/* Right side: Controls */}
+      <div className="w-1/3 flex flex-col p-6 relative">
+        {/* Logout at top-right */}
         <button
           onClick={handleLogout}
-          className="bg-red-500 text-white px-4 py-2 rounded"
+          className="absolute top-6 right-6 bg-red-500 text-white px-3 py-1 rounded"
         >
           Logout
         </button>
-      </div>
   
-      <GlobalChat user={user} />
+        <div className="flex flex-col mt-20 items-center space-y-4">
+          <h1 className="text-2xl font-bold">Welcome, {user.displayName}</h1>
+          <input
+            type="text"
+            placeholder="Enter meeting ID"
+            value={meetingId}
+            onChange={(e) => setMeetingId(e.target.value)}
+            className="border px-3 py-2 rounded w-60"
+          />
+          <button
+            onClick={joinMeeting}
+            className="bg-green-500 text-white px-4 py-2 rounded w-60"
+          >
+            Join Meeting
+          </button>
+          <button
+            onClick={createMeeting}
+            className="bg-blue-500 text-white px-4 py-2 rounded w-60"
+          >
+            Create New Meeting
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

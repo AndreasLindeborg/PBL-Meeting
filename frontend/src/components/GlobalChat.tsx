@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
-  collection,
   addDoc,
+  collection,
   serverTimestamp,
   onSnapshot,
   query,
@@ -9,67 +9,87 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { User } from "firebase/auth";
+import { format } from "date-fns";
 
 type Props = {
-  user?: User | null;
+  user?: User;
+};
+
+type Message = {
+  text: string;
+  sender: string;
+  createdAt: any;
 };
 
 export default function GlobalChat({ user }: Props) {
-  const [messages, setMessages] = useState<any[]>([]);
-  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState("");
 
   useEffect(() => {
     const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map((doc) => doc.data()));
+      setMessages(snapshot.docs.map((doc) => doc.data() as Message));
     });
 
     return () => unsubscribe();
   }, []);
 
   const sendMessage = async () => {
-    if (!user || input.trim() === "") return;
+    if (!newMessage.trim()) return;
 
-    await addDoc(collection(db, "messages"), {
-      text: input,
-      sender: user.displayName || "Anonymous",
-      createdAt: serverTimestamp(),
-    });
-
-    setInput("");
+    try {
+      await addDoc(collection(db, "messages"), {
+        text: newMessage,
+        sender: user?.displayName || "Anonymous",
+        createdAt: serverTimestamp(),
+      });
+      setNewMessage("");
+    } catch (err) {
+      console.error("Error sending message:", err);
+    }
   };
 
   return (
-    <div className="border rounded p-4 mt-6 w-full max-w-md mx-auto bg-white shadow">
-      <h2 className="text-lg font-bold mb-2">💬 Global Chat</h2>
-      
-      <div className="h-48 overflow-y-auto border p-2 mb-2 bg-gray-50 text-left">
-        {messages.map((msg, idx) => (
-          <div key={idx}>
-            <strong>{msg.sender}:</strong> {msg.text}
+    <div className="mt-10 max-w-xl mx-auto">
+      <h2 className="text-xl font-semibold mb-2">Global Chat</h2>
+      <div className="border p-3 rounded h-64 overflow-y-auto bg-white shadow-sm">
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`mb-2 p-2 rounded-md max-w-[80%] ${
+              user?.displayName === msg.sender
+                ? "bg-blue-100 text-right ml-auto"
+                : "bg-gray-100 text-left"
+            }`}
+          >
+            <div className="text-sm font-medium">{msg.sender}</div>
+            <div>{msg.text}</div>
+            <div className="text-xs text-gray-500 mt-1">
+              {msg.createdAt?.toDate
+                ? format(msg.createdAt.toDate(), "HH:mm dd/MM")
+                : ""}
+            </div>
           </div>
         ))}
       </div>
 
-      {user ? (
-        <div className="flex gap-2">
+      {/* Message input */}
+      {user && (
+        <div className="mt-4 flex">
           <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Write a message..."
-            className="flex-grow px-2 py-1 border rounded"
+            type="text"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Type a message..."
+            className="flex-1 px-3 py-2 border rounded-l"
           />
           <button
             onClick={sendMessage}
-            className="bg-blue-500 text-white px-3 py-1 rounded"
+            className="bg-blue-500 text-white px-4 rounded-r"
           >
             Send
           </button>
         </div>
-      ) : (
-        <p className="text-sm text-gray-500 text-center italic">
-          Sign in to send messages
-        </p>
       )}
     </div>
   );
