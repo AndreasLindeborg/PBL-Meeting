@@ -1,4 +1,3 @@
-// src/components/Lobby.tsx
 import { User } from "firebase/auth";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../firebase";
@@ -13,6 +12,8 @@ import {
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import GlobalChat from "./GlobalChat";
+
 
 type Props = {
   user: User;
@@ -64,7 +65,7 @@ export default function Lobby({ user }: Props) {
     <div className="text-center mt-10">
       <h1 className="text-2xl font-bold">Welcome, {user.displayName}</h1>
       <p className="text-gray-600 mb-4">What would you like to do?</p>
-
+  
       <div className="space-x-2">
         <input
           type="text"
@@ -92,6 +93,8 @@ export default function Lobby({ user }: Props) {
           Logout
         </button>
       </div>
+  
+      <GlobalChat user={user} />
     </div>
   );
 }

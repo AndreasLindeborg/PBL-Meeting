@@ -1,6 +1,7 @@
 import { auth, provider } from "../firebase";
 import { signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import GlobalChat from "./GlobalChat";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -23,6 +24,9 @@ export default function Login() {
       >
         Sign in with Google
       </button>
+  
+      {/* 👇 Global Chat rendered here */}
+      <GlobalChat />
     </div>
   );
 }
