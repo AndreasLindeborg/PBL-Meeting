@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { doc, onSnapshot } from "firebase/firestore"; // 👈 real-time update
+import { doc, onSnapshot, updateDoc } from "firebase/firestore"; 
 import { db } from "../firebase";
 import { User } from "firebase/auth";
+
+
+
 
 type Props = {
   user: User;
@@ -36,9 +39,25 @@ export default function Meeting({ user }: Props) {
     return () => unsubscribe(); // 👈 clean up listener on unmount
   }, [id]);
 
-  const handleLeave = () => {
-    navigate("/lobby");
+  const handleLeave = async () => {
+    if (!id || !meeting) return;
+  
+    try {
+      const updatedParticipants = meeting.participants.filter(
+        (p: any) => p.uid !== user.uid
+      );
+  
+      await updateDoc(doc(db, "meetings", id), {
+        participants: updatedParticipants,
+      });
+  
+      navigate("/lobby");
+    } catch (err) {
+      console.error("Error leaving meeting:", err);
+    }
   };
+  
+  
 
   if (loading) return <p className="text-center mt-10">Loading meeting...</p>;
 
