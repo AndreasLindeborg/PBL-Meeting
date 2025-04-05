@@ -9,7 +9,6 @@ import { toast } from "react-toastify";
 
 import "react-toastify/dist/ReactToastify.css";
 
-
 // Helper function to randomly pick two unique participants excluding the creator
 const pickRoles = (participants: any[], creatorUid: string) => {
   const eligible = participants.filter((p: any) => p.uid !== creatorUid);
@@ -97,14 +96,15 @@ export default function Meeting({ user }: Props) {
       </div>
     );
 
+  const creator = meeting?.participants?.find((p: any) => p.uid === meeting?.createdBy);
+
   return (
     <div className="min-h-screen bg-white text-black dark:bg-darkBg dark:text-darkText relative flex flex-col items-center p-8">
       <h1 className="text-2xl font-bold">Meeting Room</h1>
       <p className="mt-2 text-gray-600 dark:text-gray-400">Meeting ID: {id}</p>
       <p className="mt-2 text-gray-600 dark:text-gray-400">
-        Created by: {meeting?.createdBy}
+        Created by: {creator?.displayName || meeting?.createdBy}
       </p>
-      <p className="mt-4 font-medium">Welcome, {user.displayName}</p>
 
       <div className="mt-6">
         <h2 className="text-lg font-semibold">Participants:</h2>
