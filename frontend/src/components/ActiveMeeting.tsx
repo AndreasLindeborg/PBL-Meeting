@@ -98,62 +98,68 @@ export default function ActiveMeeting({ user }: Props) {
       </div>
     );
 
-  return (
-    <div className="min-h-screen flex bg-white text-black dark:bg-darkBg dark:text-darkText">
-      {/* Vinjett viewer */}
-      <div className="w-2/3 p-6 border-r border-gray-300 dark:border-darkBorder">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Vinjett</h2>
-          <div>
-            <h3 className="text-sm font-semibold mb-1 text-right">Live Participants:</h3>
-            <ul className="text-xs text-right">
-              {meeting.participants?.map((p: any, i: number) => (
-                <li key={i} className="text-gray-800 dark:text-gray-200">
-                  {p.displayName}
-                  {p.uid === meeting.createdBy && " (Supervisor)"}
-                  {p.displayName === meeting.secretary && " (Secretary)"}
-                  {p.displayName === meeting.chairman && " (Chairman)"}
-                </li>
-              ))}
-            </ul>
+    return (
+      <div className="min-h-screen flex bg-white text-black dark:bg-darkBg dark:text-darkText">
+        {/* Vinjett viewer */}
+        <div className="w-2/3 p-6 border-r border-gray-300 dark:border-darkBorder">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">Vinjett</h2>
+            <div>
+              <h3 className="text-sm font-semibold mb-1 text-right">Live Participants:</h3>
+              <ul className="text-xs text-right">
+                {meeting.participants?.map((p: any, i: number) => {
+                  const isSupervisor = p.uid === meeting.createdBy;
+                  const isSecretary = p.displayName === meeting.secretary;
+                  const isChairman = p.displayName === meeting.chairman;
+  
+                  return (
+                    <li key={i} className="text-gray-800 dark:text-gray-200">
+                      {p.displayName}
+                      {isSupervisor && " (supervisor)"}
+                      {!isSupervisor && isChairman && " 🧑‍🏫"}
+                      {!isSupervisor && isSecretary && " ✍️"}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           </div>
+          {meeting.vinjettUrl ? (
+            <iframe
+              src={meeting.vinjettUrl}
+              className="w-full h-[75vh] rounded shadow"
+              title="Vinjett"
+            ></iframe>
+          ) : (
+            <p className="italic text-gray-500">No vinjett uploaded.</p>
+          )}
         </div>
-        {meeting.vinjettUrl ? (
-          <iframe
-            src={meeting.vinjettUrl}
-            className="w-full h-[75vh] rounded shadow"
-            title="Vinjett"
-          ></iframe>
-        ) : (
-          <p className="italic text-gray-500">No vinjett uploaded.</p>
-        )}
-      </div>
-
-      {/* Live Notes */}
-      <div className="w-1/3 p-6 relative">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-bold">Live Notes</h2>
-          <div className="flex items-center space-x-2">
-            <ThemeToggle />
-            <button
-              onClick={handleExitMeeting}
-              className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
-            >
-              Exit
-            </button>
+  
+        {/* Live Notes */}
+        <div className="w-1/3 p-6 relative">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-xl font-bold">Live Notes</h2>
+            <div className="flex items-center space-x-2">
+              <ThemeToggle />
+              <button
+                onClick={handleExitMeeting}
+                className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+              >
+                Exit
+              </button>
+            </div>
           </div>
+          <p className="text-sm text-gray-400 mb-2">
+            Secretary: <span className="font-medium text-gray-200">{meeting.secretary}</span>
+          </p>
+          <textarea
+            value={notes}
+            onChange={handleNoteChange}
+            placeholder="Type meeting notes here..."
+            className="w-full h-[90vh] p-4 bg-black bg-opacity-10 dark:bg-darkSurface border border-gray-300 dark:border-darkBorder rounded resize-none focus:outline-none"
+            disabled={!isSecretary}
+          />
         </div>
-        <p className="text-sm text-gray-400 mb-2">
-          Secretary: <span className="font-medium text-gray-200">{meeting.secretary}</span>
-        </p>
-        <textarea
-          value={notes}
-          onChange={handleNoteChange}
-          placeholder="Type meeting notes here..."
-          className="w-full h-[90vh] p-4 bg-black bg-opacity-10 dark:bg-darkSurface border border-gray-300 dark:border-darkBorder rounded resize-none focus:outline-none"
-          disabled={!isSecretary}
-        />
       </div>
-    </div>
-  );
-}
+    );
+  }
