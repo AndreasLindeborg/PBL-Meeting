@@ -14,6 +14,8 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import GlobalChat from "./GlobalChat";
 import ThemeToggle from "./ThemeToggle"; 
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 
 type Props = {
@@ -50,11 +52,16 @@ export default function Lobby({ user }: Props) {
       const meetingSnap = await getDoc(meetingRef);
   
       if (!meetingSnap.exists()) {
-        alert("Meeting not found!");
+        toast.error("Meeting not found!");
         return;
       }
   
       const meetingData = meetingSnap.data();
+  
+      if (meetingData.status === "ended") {
+        toast.info("This meeting has ended.");
+        return;
+      }
   
       // Add current user to participants
       await updateDoc(meetingRef, {
@@ -67,7 +74,6 @@ export default function Lobby({ user }: Props) {
       } else {
         navigate(`/meeting/${meetingId}`);
       }
-  
     } catch (error) {
       console.error("Error joining meeting:", error);
     }
