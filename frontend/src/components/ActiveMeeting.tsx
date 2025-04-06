@@ -226,7 +226,7 @@ export default function ActiveMeeting({ user }: Props) {
                   onClick={downloadVinjett}
                   className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 text-center"
                 >
-                  Download Vinjett
+                  View Vinjett
                 </button>
               )}
             </div>
