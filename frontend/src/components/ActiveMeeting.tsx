@@ -1,28 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   doc,
   onSnapshot,
   updateDoc,
-  getDoc,
 } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage } from "../firebase";
+import { db } from "../firebase";
 import { User } from "firebase/auth";
 import ThemeToggle from "./ThemeToggle";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { v4 as uuidv4 } from "uuid";
 
-const pickRoles = (participants: any[], creatorUid: string) => {
-  const eligible = participants.filter((p: any) => p.uid !== creatorUid);
-  if (eligible.length < 2) return { chairman: null, secretary: null };
-  const shuffled = [...eligible].sort(() => 0.5 - Math.random());
-  return {
-    chairman: shuffled[0].displayName,
-    secretary: shuffled[1].displayName,
-  };
-};
 
 type Props = {
   user: User;
@@ -34,6 +22,8 @@ export default function ActiveMeeting({ user }: Props) {
   const [meeting, setMeeting] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState("");
+  const hasJoinedToastShown = useRef(false);
+
   const isSecretary = user.uid === meeting?.participants?.find((p: any) => p.displayName === meeting?.secretary)?.uid;
 
   useEffect(() => {
@@ -45,11 +35,18 @@ export default function ActiveMeeting({ user }: Props) {
         setMeeting(data);
         setNotes(data.notes || "");
         setLoading(false);
+
+        // Show toast only once on join
+        const alreadyIn = data.participants.find((p: any) => p.uid === user.uid);
+        if (alreadyIn && !hasJoinedToastShown.current) {
+          toast.info("You joined the meeting.");
+          hasJoinedToastShown.current = true;
+        }
       }
     });
 
     return () => unsub();
-  }, [id]);
+  }, [id, user.uid]);
 
   const handleNoteChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newNotes = e.target.value;
@@ -58,6 +55,22 @@ export default function ActiveMeeting({ user }: Props) {
       await updateDoc(doc(db, "meetings", id), {
         notes: newNotes,
       });
+    }
+  };
+
+  const handleExitMeeting = async () => {
+    if (!id || !meeting) return;
+    try {
+      const updatedParticipants = meeting.participants.filter(
+        (p: any) => p.uid !== user.uid
+      );
+      await updateDoc(doc(db, "meetings", id), {
+        participants: updatedParticipants,
+      });
+      toast.success("You left the meeting.");
+      navigate("/lobby");
+    } catch (err) {
+      console.error("Error exiting meeting:", err);
     }
   };
 
@@ -88,9 +101,19 @@ export default function ActiveMeeting({ user }: Props) {
       <div className="w-1/3 p-6 relative">
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-xl font-bold">Live Notes</h2>
-          <ThemeToggle />
+          <div className="flex items-center space-x-2">
+            <ThemeToggle />
+            <button
+              onClick={handleExitMeeting}
+              className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+            >
+              Exit
+            </button>
+          </div>
         </div>
-        <p className="text-sm text-gray-400 mb-2">Secretary: <span className="font-medium text-gray-200">{meeting.secretary}</span></p>
+        <p className="text-sm text-gray-400 mb-2">
+          Secretary: <span className="font-medium text-gray-200">{meeting.secretary}</span>
+        </p>
         <textarea
           value={notes}
           onChange={handleNoteChange}
