@@ -48,17 +48,26 @@ export default function Lobby({ user }: Props) {
     try {
       const meetingRef = doc(db, "meetings", meetingId);
       const meetingSnap = await getDoc(meetingRef);
-
+  
       if (!meetingSnap.exists()) {
         alert("Meeting not found!");
         return;
       }
-
+  
+      const meetingData = meetingSnap.data();
+  
+      // Add current user to participants
       await updateDoc(meetingRef, {
         participants: arrayUnion({ uid: user.uid, displayName: user.displayName }),
       });
-
-      navigate(`/meeting/${meetingId}`);
+  
+      // Redirect based on meeting status
+      if (meetingData.status === "started") {
+        navigate(`/meeting/${meetingId}/active`);
+      } else {
+        navigate(`/meeting/${meetingId}`);
+      }
+  
     } catch (error) {
       console.error("Error joining meeting:", error);
     }

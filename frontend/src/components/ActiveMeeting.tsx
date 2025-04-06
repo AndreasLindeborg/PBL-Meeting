@@ -4,6 +4,7 @@ import {
   doc,
   onSnapshot,
   updateDoc,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { User } from "firebase/auth";
@@ -36,17 +37,33 @@ export default function ActiveMeeting({ user }: Props) {
         setNotes(data.notes || "");
         setLoading(false);
 
-        // Show toast only once on join
         const alreadyIn = data.participants.find((p: any) => p.uid === user.uid);
         if (alreadyIn && !hasJoinedToastShown.current) {
           toast.info("You joined the meeting.");
           hasJoinedToastShown.current = true;
         }
+      } else {
+        setLoading(false);
+        toast.error("Meeting not found");
+        navigate("/lobby");
       }
     });
 
     return () => unsub();
-  }, [id, user.uid]);
+  }, [id, user.uid, navigate]);
+
+  useEffect(() => {
+    const checkStatusAndRedirect = async () => {
+      if (!id) return;
+      const docRef = doc(db, "meetings", id);
+      const snap = await getDoc(docRef);
+      const data = snap.data();
+      if (data?.status !== "started") {
+        navigate(`/meeting/${id}`);
+      }
+    };
+    checkStatusAndRedirect();
+  }, [id, navigate]);
 
   const handleNoteChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newNotes = e.target.value;
@@ -85,11 +102,26 @@ export default function ActiveMeeting({ user }: Props) {
     <div className="min-h-screen flex bg-white text-black dark:bg-darkBg dark:text-darkText">
       {/* Vinjett viewer */}
       <div className="w-2/3 p-6 border-r border-gray-300 dark:border-darkBorder">
-        <h2 className="text-xl font-bold mb-4">Vinjett</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">Vinjett</h2>
+          <div>
+            <h3 className="text-sm font-semibold mb-1 text-right">Live Participants:</h3>
+            <ul className="text-xs text-right">
+              {meeting.participants?.map((p: any, i: number) => (
+                <li key={i} className="text-gray-800 dark:text-gray-200">
+                  {p.displayName}
+                  {p.uid === meeting.createdBy && " (Supervisor)"}
+                  {p.displayName === meeting.secretary && " (Secretary)"}
+                  {p.displayName === meeting.chairman && " (Chairman)"}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
         {meeting.vinjettUrl ? (
           <iframe
             src={meeting.vinjettUrl}
-            className="w-full h-[90vh] rounded shadow"
+            className="w-full h-[75vh] rounded shadow"
             title="Vinjett"
           ></iframe>
         ) : (

@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { doc, onSnapshot, updateDoc } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
 import { User } from "firebase/auth";
 import ThemeToggle from "./ThemeToggle";
@@ -29,8 +29,9 @@ export default function Meeting({ user }: Props) {
   const [loading, setLoading] = useState(true);
   const [spinning, setSpinning] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [justStarted, setJustStarted] = useState(false);
   const [showRoles, setShowRoles] = useState(false);
+  const hasRedirected = useRef(false);
+  const prevStatus = useRef("waiting");
 
   useEffect(() => {
     if (!id) return;
@@ -40,20 +41,36 @@ export default function Meeting({ user }: Props) {
         if (docSnap.exists()) {
           const meetingData = docSnap.data();
 
-          // Detect transition to "started" state for all users
-          if (meeting?.status !== "started" && meetingData.status === "started") {
+          // Transition from waiting -> started (first time)
+          if (
+            prevStatus.current === "waiting" &&
+            meetingData.status === "started" &&
+            !hasRedirected.current
+          ) {
             setSpinning(true);
             setShowRoles(false);
-            setJustStarted(true);
+            hasRedirected.current = true;
+
             setTimeout(() => {
               setSpinning(false);
               setShowRoles(true);
               setTimeout(() => {
                 navigate(`/meeting/${id}/active`);
-              }, 4000); // 4 more seconds after roles show = total 7 seconds
+              }, 4000);
             }, 3000);
           }
 
+          // Already started (user rejoined)
+          if (
+            prevStatus.current === "started" &&
+            meetingData.status === "started" &&
+            !hasRedirected.current
+          ) {
+            hasRedirected.current = true;
+            navigate(`/meeting/${id}/active`);
+          }
+
+          prevStatus.current = meetingData.status;
           setMeeting(meetingData);
         } else {
           console.error("Meeting not found");
@@ -66,7 +83,7 @@ export default function Meeting({ user }: Props) {
       }
     );
     return () => unsubscribe();
-  }, [id, navigate, meeting?.status]);
+  }, [id, navigate]);
 
   const handleLeave = async () => {
     if (!id || !meeting) return;
