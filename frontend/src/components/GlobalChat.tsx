@@ -52,7 +52,6 @@ export default function GlobalChat({ user }: Props) {
   return (
     <div className="w-full h-full px-4 flex flex-col justify-between">
       <h2 className="text-xl font-semibold mb-2">Basgrupp 1 - Global Chat</h2>
-
       <div className="border p-3 rounded flex-1 overflow-y-auto bg-white shadow-sm dark:bg-darkCard dark:border-darkBorder">
         {messages.map((msg, index) => (
           <div

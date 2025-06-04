@@ -17,7 +17,6 @@ import ThemeToggle from "./ThemeToggle";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-
 type Props = {
   user: User;
 };

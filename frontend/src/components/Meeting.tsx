@@ -41,7 +41,7 @@ export default function Meeting({ user }: Props) {
         if (docSnap.exists()) {
           const meetingData = docSnap.data();
 
-          // Transition from waiting -> started (first time)
+          
           if (
             prevStatus.current === "waiting" &&
             meetingData.status === "started" &&
@@ -60,7 +60,7 @@ export default function Meeting({ user }: Props) {
             }, 3000);
           }
 
-          // Already started (user rejoined)
+          
           if (
             prevStatus.current === "started" &&
             meetingData.status === "started" &&

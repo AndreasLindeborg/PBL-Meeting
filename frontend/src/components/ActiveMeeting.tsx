@@ -25,7 +25,6 @@ export default function ActiveMeeting({ user }: Props) {
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState("");
   const hasJoinedToastShown = useRef(false);
-
   const isSecretary =
     user.uid === meeting?.participants?.find((p: any) => p.displayName === meeting?.secretary)?.uid;
   const isSupervisor = user.uid === meeting?.createdBy;
