@@ -2,7 +2,8 @@
 **Video Link**: https://www.youtube.com/watch?v=Qe1E_yEJAxU 
 
 ## Individual Oral Code Screencast
-**Video Link (andli890)**: https://www.youtube.com/watch?v=Wo17Y9bJC1M  **Video Link (klaod937)**: https://www.youtube.com/watch?v=W12tbI5Kxo8 
+- **Video Link (andli890)**: https://www.youtube.com/watch?v=Wo17Y9bJC1M
+- **Video Link (klaod937)**: https://www.youtube.com/watch?v=W12tbI5Kxo8 
 
 ## Functional and Technological Specification
 
